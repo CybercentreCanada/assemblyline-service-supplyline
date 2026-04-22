@@ -1,0 +1,28 @@
+{
+  "template": "https://github.com/CybercentreCanada/assemblyline-service-template.git",
+  "commit": "fb7207484332b978cc409dfc9b9c672335a8cc71",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "service_name": "supplyline",
+      "__svc_name": "supplyline",
+      "__repository": "assemblyline-service-supplyline",
+      "__pkg_name": "supplyline",
+      "class_name": "Supplyline",
+      "short_description": "This Assemblyline service extracts identifies supply-chain embedded malicious payloads.",
+      "short_description_fr": "This is a placeholder for a french description.",
+      "stage": "EXTRACT",
+      "category": "Static Analysis",
+      "org_name_full": "CybercentreCanada",
+      "org_name_short": "cccs",
+      "license": "mit",
+      "_extensions": [
+        "local_extensions.github_maintainer.Ext"
+      ],
+      "_template": "https://github.com/CybercentreCanada/assemblyline-service-template.git",
+      "_commit": "fb7207484332b978cc409dfc9b9c672335a8cc71",
+      "_github_maintainer": "cccs-jaw"
+    }
+  },
+  "directory": null
+}
