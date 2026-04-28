@@ -16,7 +16,7 @@ from assemblyline_v4_service.common.request import ServiceRequest
 from assemblyline_v4_service.common.result import Result, ResultSection
 from lxml import etree
 from platformdirs import PlatformDirs
-from sandlock import Policy, Sandbox
+from sandlock import Policy, Sandbox, min_landlock_abi, landlock_abi_version
 
 MATCH_MSBUILD_ROOT = re.compile(r"^(\{[^\}]*\})?Project")
 MSBUILD_RUNTIME_SECONDS = 10
@@ -94,11 +94,20 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
 
 class Supplyline(ServiceBase):
     """Assemblyline service extracts and identifies supply-chain embedded malicious payloads."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sandlock_available = landlock_abi_version() >= min_landlock_abi()
 
     def execute(self, request: ServiceRequest):
         """Run the service. Returns the result or None if no result was produced."""
         result = Result()
         request.result = result
+
+        if not self.sandlock_available:
+            self.log.warning(
+                "Landlock is either not enabled or the ABI version is too old. MSBuild script extraction will be skipped."
+            )
+            return
 
         if not is_msbuild_script(request.file_path):
             self.log.info("File is not identified as a .Net MSBuild script. Skipping processing.")
