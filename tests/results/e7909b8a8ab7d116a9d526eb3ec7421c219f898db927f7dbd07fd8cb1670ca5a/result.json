@@ -1,0 +1,45 @@
+{
+    "response": {
+        "extracted": [
+            {
+                "name": "exec-0.ps1",
+                "sha256": "f47b181db024241a54ad26a367296a24c8c52b9bc4c249e57f7a8b761e9de445",
+                "description": "Unpacked from MSBuild Script e7909b8a8ab7d116a9d526eb3ec7421c219f898db927f7dbd07fd8cb1670ca5a",
+                "parent_relation": "EXTRACTED"
+            }
+        ]
+    },
+    "files": {
+        "extracted": [
+            {
+                "name": "exec-0.ps1",
+                "sha256": "f47b181db024241a54ad26a367296a24c8c52b9bc4c249e57f7a8b761e9de445"
+            }
+        ],
+        "supplementary": []
+    },
+    "results": {
+        "heuristics": [],
+        "tags": {},
+        "temp_submission_data": {}
+    },
+    "result": {
+        "score": 0,
+        "sections": [
+            {
+                "body": null,
+                "classification": "TLP:C",
+                "body_format": "TEXT",
+                "body_config": {},
+                "depth": 0,
+                "heuristic": null,
+                "tags": {},
+                "title_text": "MSBuild scripts successfully unpacked!",
+                "zeroize_on_tag_safe": false,
+                "auto_collapse": false,
+                "promote_to": null
+            }
+        ]
+    },
+    "type": "code/xml"
+}

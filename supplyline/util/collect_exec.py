@@ -33,7 +33,7 @@ def generate_artifact(dump_path: str, contents: str) -> None:
         f.write(contents)
 
 
-def eval_exec(project: Project, task: clr.Object) -> str:
+def eval_exec(project: Project, task) -> str:
     """Evaluates an MSBuild Exec task, expanding any properties and environment variables."""
     raw_command = task.Parameters["Command"]
 
