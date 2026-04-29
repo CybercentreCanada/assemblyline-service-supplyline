@@ -93,7 +93,7 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
 
 
 class Supplyline(ServiceBase):
-    """Assemblyline service extracts and identifies supply-chain embedded malicious payloads."""
+    """An Assemblyline service implementation for extracting and identifying supply-chain embedded malicious payloads."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sandlock_available = landlock_abi_version() >= min_landlock_abi()
