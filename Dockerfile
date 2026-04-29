@@ -31,5 +31,33 @@ ARG version=1.0.0.dev1
 USER root
 RUN sed -i -e "s/\$SERVICE_TAG/$version/g" service_manifest.yml
 
+# Install .Net runtime & SDK
+ENV DOTNET_ROOT=/usr/share/dotnet
+ENV PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
+
+RUN curl -L https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
+RUN chmod +x dotnet-install.sh
+RUN ./dotnet-install.sh --version 10.0.203 --install-dir $DOTNET_ROOT
+RUN rm ./dotnet-install.sh
+
 # Switch to assemblyline user
 USER assemblyline
+
+RUN mkdir -p $HOME/.local/share/supplyshell-libs
+RUN mkdir /tmp/supplyshell/
+
+# version environment variable has a meaning to the .net command, so we clear it first.
+RUN /bin/bash -c '( \
+        set -e; \
+        unset version; \
+        dotnet publish ./dotnet-dependencies.config \
+            -c Release \
+            -o $HOME/.local/share/supplyshell-libs \
+            --no-self-contained \
+            /p:GenerateRuntimeConfigurationFiles=false \
+            /p:BaseOutputPath=/tmp/supplyshell/bin/ \
+            /p:BaseIntermediateOutputPath=/tmp/supplyshell/obj/ \
+            /p:MSBuildProjectExtensionsPath=/tmp/supplyshell/obj/ \
+    )'
+
+RUN rm -rf /tmp/supplyshell

@@ -1,9 +1,9 @@
 name: Supplyline
-version: $SERVICE_TAG
+version: v4.6.0.dev5
 description: This Assemblyline service extracts identifies supply-chain embedded malicious payloads.
 
 # Regex defining the types of files the service accepts and rejects
-accepts: .*
+accepts: code/xml
 rejects: empty
 
 # At which stage the service should run (one of FILTER, EXTRACT, CORE, SECONDARY, POST, REVIEW)
