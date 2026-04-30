@@ -9,7 +9,7 @@
       "__repository": "assemblyline-service-supplyline",
       "__pkg_name": "supplyline",
       "class_name": "Supplyline",
-      "short_description": "This Assemblyline service extracts and identifies supply-chain embedded malicious payloads.",
+      "short_description": "This Assemblyline service identifies and extracts supply-chain embedded malicious payloads.",
       "short_description_fr": "This is a placeholder for a french description.",
       "stage": "EXTRACT",
       "category": "Static Analysis",
