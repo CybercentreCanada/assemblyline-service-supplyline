@@ -6,7 +6,38 @@
 [![License](https://img.shields.io/github/license/CybercentreCanada/assemblyline-service-supplyline)](./LICENSE)
 # Supplyline Service
 
-This Assemblyline service extracts identifies supply-chain embedded malicious payloads.
+This Assemblyline service identifies and extracts supply-chain embedded malicious payloads.
+
+## What does Supplyline do?
+The Supplyline service aims to identify cases of supply-chain related malicious payloads and reconstruct them into artifacts which can be analyzed by existing services. Currently Supplyline only focuses on supporting MSBuild script files, with the goal to expand in the future.
+
+Consider a specific scenario where a MSBuild script (.csporj, .sln, .vbproj etc), typically used to define C# or VB.Net Visual Studio projects or solutions, contains a malicious payload which is detonated at build-time. As an example of this, consider the below sample Visual Studio project file:
+```
+<Project DefaultTargets="testtarget" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <testdata1>do</testdata1>
+        <testdata2>e</testdata2>
+        <testdata3>vi</testdata3>
+    </PropertyGroup>
+    <PropertyGroup>
+        <testdata4>l</testdata3>
+        <testdata5>command</testdata4>
+    </PropertyGroup>
+
+    <Target Name="testtarget">
+        <Exec Command="echo $(testdata1) $(testdata2)$(testdata3)$(testdata4) $(testdata5)" />
+    </Target>
+</Project>
+```
+
+The default build target uses the MSBuild **Exec** Task which is invoked at build-time. In this case, the command is obfuscated using a series of properties to be reconstructed by the MSBuild evaluation processes prior to execution.
+
+The Supplyline service will process MSBuild scripts such as this and evaluates contained Exec tasks, dumping them for further processing and analysis.
+
+## Security Considerations
+Under the hood, Supplyline orchestrates the Microsoft Build Project Evaluator to evaluate the Exec tasks and dump reconstructed Exec tasks. Supplyline takes steps to minimize security risks, including wrapping the evaluator with Landlock, however there is some risk and exposure via the Evaluator. Specifically, via Property Functions, code execution can occur during the Project Evaluation stage, although MSBuild restricts this to using an allowlist to prevent side-effects and mitigate security concerns. For more information, refer to: https://devblogs.microsoft.com/visualstudio/msbuild-property-functions/
+
+While Supplyline uses Landlock to sandbox the MSBuild Project Evaluator and the MSBuild Evaluator allow-lists Property Functions, Supplyline can and should be layered with additional containerization. Supplyline should be executed in a containerized environment with minimal permissions.
 
 ## Image variants and tags
 
@@ -42,7 +73,7 @@ General Assemblyline documentation can be found at: https://cybercentrecanada.gi
 
 # Service Supplyline
 
-This is a placeholder for a french description.
+Ce service d'Assemblyline permet d'identifer et d'extraire les paquets malicieux dissimulés dans les chaînes de production.
 
 ## Variantes et étiquettes d'image
 
@@ -75,4 +106,3 @@ Pour ajouter ce service à votre déploiement d'Assemblyline, suivez ceci
 ## Documentation
 
 La documentation générale sur Assemblyline peut être consultée à l'adresse suivante: https://cybercentrecanada.github.io/assemblyline4_docs/
-
