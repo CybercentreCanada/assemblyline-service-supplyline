@@ -73,7 +73,7 @@ General Assemblyline documentation can be found at: https://cybercentrecanada.gi
 
 # Service Supplyline
 
-This is a placeholder for a french description.
+Ce service d'Assemblyline permet d'identifer et d'extraire les paquets malicieux dissimulés dans les chaînes de production.
 
 ## Variantes et étiquettes d'image
 
