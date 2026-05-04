@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from xml.etree.ElementTree import ParseError
+import json
 
 from assemblyline_v4_service.common.base import ServiceBase
 from assemblyline_v4_service.common.request import ServiceRequest
@@ -63,6 +64,28 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
 
     with TemporaryDirectory() as temp_dir:
         shutil.copyfile(file, Path(temp_dir) / file.name)
+
+        raise MSBuildEvalError(json.dumps({
+            "fs_readable": [
+                "/usr",
+                "/lib",
+                "/lib64",
+                "/bin",
+                "/etc",
+                "/proc",
+                "/dev",
+                "/usr/share/dotnet",
+                "/opt/al_service",
+                dotnet_libs,
+                *site.getsitepackages(),
+                site.getusersitepackages(),
+                str(MSBUILD_EVAL_PATH.parent),
+                "/tmp",
+            ],
+            "fs_writable": [str(results_dir), "/tmp"],
+            "fs_mount": {"/tmp": str(temp_dir)},
+            "env": {"DOTNET_ROOT": "/usr/share/dotnet", "PYTHONPATH": dotnet_libs}
+        }))
 
         policy = Policy(
             fs_readable=[
