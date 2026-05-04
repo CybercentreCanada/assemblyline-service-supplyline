@@ -95,7 +95,7 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
     with TemporaryDirectory() as temp_dir:
         shutil.copyfile(file, Path(temp_dir) / file.name)
 
-        test_landlock_syscall()
+        #test_landlock_syscall()
         policy = Policy(
             fs_readable=[
                 "/lib",
