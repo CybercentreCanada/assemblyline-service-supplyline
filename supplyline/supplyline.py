@@ -105,6 +105,11 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
             "/usr/bin",
             "/etc"
         ]
+        readable_files = [os.path.realpath(r) for r in readable_files]
+
+        readable_files = list(set(readable_files))
+
+        raise MSBuildEvalError(f"Testing readability of required paths: {readable_files}")
 
         for r in readable_files:
             if not os.path.exists(r):
