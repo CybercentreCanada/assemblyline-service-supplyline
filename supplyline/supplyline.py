@@ -66,22 +66,14 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
     with TemporaryDirectory() as temp_dir:
         shutil.copyfile(file, Path(temp_dir) / file.name)
 
-        result = subprocess.run(['grep', 'NoNewPrivs', '/proc/self/status'], capture_output=True, text=True)
-        raise MSBuildEvalError(f"{result.stdout}")
-
-        with open("/sys/kernel/security/lsm", "r") as f:
-            raise MSBuildEvalError(f"LSMs enabled in the kernel: {f.read()}")
-
         policy = Policy(
             fs_readable=[
-                #"/usr",
                 "/lib",
-                #"/lib64",
+                "/lib64",
+                "/usr/lib",
+                "/usr/lib64",
                 "/bin",
-                #"/etc",
-                #"/proc",
-                #"/dev",
-                #"/usr/share/dotnet"
+                "/usr/bin"
             ]
         )
         result = Sandbox(policy).run(["/bin/true"], timeout=MSBUILD_RUNTIME_SECONDS)
