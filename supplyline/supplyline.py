@@ -10,6 +10,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from xml.etree.ElementTree import ParseError
 import json
+import subprocess
 
 from assemblyline_v4_service.common.base import ServiceBase
 from assemblyline_v4_service.common.request import ServiceRequest
@@ -64,6 +65,13 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
 
     with TemporaryDirectory() as temp_dir:
         shutil.copyfile(file, Path(temp_dir) / file.name)
+
+        result = subprocess.run(['grep', 'NoNewPrivs', '/proc/self/status'], capture_output=True, text=True)
+        raise MSBuildEvalError(f"{result.stdout}")
+
+        with open("/sys/kernel/security/lsm", "r") as f:
+            raise MSBuildEvalError(f"LSMs enabled in the kernel: {f.read()}")
+
         policy = Policy(
             fs_readable=[
                 #"/usr",
