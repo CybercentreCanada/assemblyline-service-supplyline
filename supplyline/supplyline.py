@@ -66,6 +66,21 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
         shutil.copyfile(file, Path(temp_dir) / file.name)
         policy = Policy(
             fs_readable=[
+                #"/usr",
+                "/lib",
+                #"/lib64",
+                "/bin",
+                #"/etc",
+                #"/proc",
+                #"/dev",
+                #"/usr/share/dotnet"
+            ]
+        )
+        result = Sandbox(policy).run(["/bin/true"], timeout=MSBUILD_RUNTIME_SECONDS)
+        raise MSBuildEvalError(f"{result}, {result.stderr.decode()}, {result.stdout.decode()}")
+
+        policy = Policy(
+            fs_readable=[
                 "/usr",
                 "/lib",
                 "/lib64",
