@@ -88,7 +88,9 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
         result = Sandbox(policy).run(supply_line_command, timeout=MSBUILD_RUNTIME_SECONDS)
 
     if not result.success:
-        raise MSBuildEvalError(f"MSBuild evaluation failed: {result.stderr.decode()} {result}")
+        raise MSBuildEvalError(f"MSBuild evaluation failed: {result.stderr.decode()}; "
+                               f"Landlock ABI Version: {landlock_abi_version()}; "
+                               f"Required ABI Version: {min_landlock_abi()}; ")
 
     return [Path(root) / f for root, _, files in os.walk(results_dir) for f in files]
 
