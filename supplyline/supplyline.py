@@ -64,6 +64,21 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
 
     with TemporaryDirectory() as temp_dir:
         shutil.copyfile(file, Path(temp_dir) / file.name)
+        policy = Policy(
+            fs_readable=[
+                "/usr",
+                "/lib",
+                "/lib64",
+                "/bin",
+                "/etc",
+                "/proc",
+                "/dev",
+                "/usr/share/dotnet"
+            ],
+            env={"DOTNET_ROOT": "/usr/share/dotnet", "PYTHONPATH": dotnet_libs},
+        )
+        result = Sandbox(policy).run(["dotnet","--version"], timeout=MSBUILD_RUNTIME_SECONDS)
+        raise MSBuildEvalError(f"{result}, {result.stderr.decode()}, {result.stdout.decode()}")
 
         raise MSBuildEvalError("; ".join(os.listdir("/")))
         raise MSBuildEvalError(json.dumps({
