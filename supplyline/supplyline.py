@@ -96,15 +96,22 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
         shutil.copyfile(file, Path(temp_dir) / file.name)
 
         #test_landlock_syscall()
+        readable_files = [
+            "/lib",
+            "/lib64",
+            "/usr/lib",
+            "/usr/lib64",
+            "/bin",
+            "/usr/bin",
+            "/etc"
+        ]
+
+        for r in readable_files:
+            if not os.path.exists(r):
+                raise MSBuildEvalError(f"Required readable path does not exist: {r}")
+
         policy = Policy(
-            fs_readable=[
-                "/lib",
-                "/lib64",
-                "/usr/lib",
-                "/usr/lib64",
-                "/bin",
-                "/usr/bin"
-            ]
+            fs_readable=readable_files
         )
         result = Sandbox(policy).run(["/bin/true"], timeout=MSBUILD_RUNTIME_SECONDS)
         raise MSBuildEvalError(f"{result}, {result.stderr.decode()}, {result.stdout.decode()}")
