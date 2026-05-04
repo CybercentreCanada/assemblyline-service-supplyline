@@ -65,6 +65,7 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
     with TemporaryDirectory() as temp_dir:
         shutil.copyfile(file, Path(temp_dir) / file.name)
 
+        raise MSBuildEvalError("; ".join(os.listdir("/")))
         raise MSBuildEvalError(json.dumps({
             "fs_readable": [
                 "/usr",
