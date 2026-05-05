@@ -90,7 +90,7 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
         #test_seccomp_syscall()
         #test_landlock_syscall()
         r = subprocess.run(["/bin/true"], check=True, capture_output=True)
-
+        raise MSBuildEvalError(f"Subprocess was successful...")
         readable_files = [
             "/lib",
             "/lib64",
