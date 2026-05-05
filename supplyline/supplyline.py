@@ -23,6 +23,13 @@ MATCH_MSBUILD_ROOT = re.compile(r"^(\{[^\}]*\})?Project")
 MSBUILD_RUNTIME_SECONDS = 10
 MSBUILD_EVAL_PATH = Path(__file__).parent / "util" / "collect_exec.py"
 
+import ctypes, ctypes.util, errno
+
+libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
+
+SYS_seccomp = 317  # x86_64 syscall number for seccomp
+SECCOMP_GET_ACTION_AVAIL = 2
+SECCOMP_RET_USER_NOTIF = 0x7FC00000
 
 class MSBuildEvalError(Exception):
     """Custom exception for MSBuild evaluation errors."""
@@ -34,28 +41,13 @@ import os
 # Landlock syscall numbers for x86_64
 SYS_LANDLOCK_CREATE_RULESET = 444
 
-def test_landlock_syscall():
-    libc = ctypes.CDLL("libc.so.6", use_errno=True)
+def test_seccomp_syscall():
+    action = ctypes.c_uint(SECCOMP_RET_USER_NOTIF)
+    ctypes.set_errno(0)
+    r = libc.syscall(SYS_seccomp, SECCOMP_GET_ACTION_AVAIL, 0, ctypes.byref(action))
+    e = ctypes.get_errno()
 
-    # We pass NULL/0 to trigger a response without actually creating a ruleset
-    # If the syscall is allowed, it should return -1 with EFAULT (14) or EINVAL (22)
-    result = libc.syscall(SYS_LANDLOCK_CREATE_RULESET, None, 0, 0)
-    error_code = ctypes.get_errno()
-
-    if result == -1:
-        if error_code == 1: # EPERM
-            raise MSBuildEvalError("❌ BLOCKED by Seccomp (EPERM)")
-            raise MSBuildEvalError("Result: Your container runtime is explicitly stopping this syscall.")
-        elif error_code == 38: # ENOSYS
-            raise MSBuildEvalError("❌ NOT IMPLEMENTED (ENOSYS)")
-            raise MSBuildEvalError("Result: The kernel on the host machine does not support Landlock.")
-        elif error_code in [14, 22]: # EFAULT or EINVAL
-            raise MSBuildEvalError("✅ ALLOWED (Reached Kernel)")
-            raise MSBuildEvalError(f"Result: Syscall is permitted. Error {error_code} is expected for null args.")
-        else:
-            raise MSBuildEvalError(f"❓ UNKNOWN ERROR: {error_code}")
-    else:
-        raise MSBuildEvalError("✅ ALLOWED (Success)")
+    raise MSBuildEvalError(f"Landlock syscall test result: {r}, errno: {e}, action: {action.value}")
 
 def is_msbuild_script(file: Path) -> bool:
     """Determines if the provided file is a .Net MSBuild script based on file extension and content.
@@ -95,6 +87,7 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
     with TemporaryDirectory() as temp_dir:
         shutil.copyfile(file, Path(temp_dir) / file.name)
 
+        test_seccomp_syscall()
         #test_landlock_syscall()
         readable_files = [
             "/lib",
