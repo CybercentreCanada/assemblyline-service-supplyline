@@ -26,6 +26,10 @@ RUN pip install \
 WORKDIR /opt/al_service
 COPY . .
 
+USER root
+RUN chown -R 1000:1000 ./sandlock
+
+USER assemblyline
 # Patch version in manifest
 ARG version=1.0.0.dev1
 USER root
@@ -40,8 +44,13 @@ RUN chmod +x dotnet-install.sh
 RUN ./dotnet-install.sh --version 10.0.203 --install-dir $DOTNET_ROOT
 RUN rm ./dotnet-install.sh
 
+RUN apt-get update && apt-get install -y build-essential curl
+
 # Switch to assemblyline user
 USER assemblyline
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+RUN . $HOME/.cargo/env && pip install --no-cache-dir ./sandlock/python
 
 RUN mkdir -p $HOME/.local/share/supplyshell-libs
 RUN mkdir /tmp/supplyshell/
