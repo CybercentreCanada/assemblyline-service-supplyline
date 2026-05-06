@@ -27,7 +27,7 @@ WORKDIR /opt/al_service
 COPY . .
 
 USER root
-RUN chown -R 1000:1000 ./sandlock
+#RUN chown -R 1000:1000 ./sandlock
 
 USER assemblyline
 # Patch version in manifest
@@ -50,7 +50,7 @@ RUN apt-get update && apt-get install -y build-essential curl
 USER assemblyline
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-RUN . $HOME/.cargo/env && pip install --no-cache-dir ./sandlock/python
+#RUN . $HOME/.cargo/env && pip install --no-cache-dir ./sandlock/python
 
 RUN mkdir -p $HOME/.local/share/supplyshell-libs
 RUN mkdir /tmp/supplyshell/
