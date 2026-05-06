@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 import site
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -16,10 +15,11 @@ from assemblyline_v4_service.common.request import ServiceRequest
 from assemblyline_v4_service.common.result import Result, ResultSection
 from lxml import etree
 from platformdirs import PlatformDirs
-from sandlock import Policy, Sandbox, min_landlock_abi, landlock_abi_version
+from sandlock import Policy, Sandbox, landlock_abi_version, min_landlock_abi
 
 MATCH_MSBUILD_ROOT = re.compile(r"^(\{[^\}]*\})?Project")
 MSBUILD_RUNTIME_SECONDS = 10
+MSBUILD_EVAL_PATH = Path(__file__).parent / "util" / "collect_exec.py"
 
 
 class MSBuildEvalError(Exception):
@@ -57,7 +57,7 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
     Raises:
         MSBuildEvalError: If the msbuild evaluation process fails.
     """
-    supply_line_command = [sys.executable, "-m", "supplyline.util.collect_exec", f"/tmp/{file.name}", results_dir]
+    supply_line_command = [sys.executable, MSBUILD_EVAL_PATH, f"/tmp/{file.name}", results_dir]
 
     dotnet_libs = PlatformDirs("supplyshell-libs", "cccs").user_data_dir
 
@@ -78,6 +78,7 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
                 dotnet_libs,
                 *site.getsitepackages(),
                 site.getusersitepackages(),
+                MSBUILD_EVAL_PATH.parent,
                 "/tmp",
             ],
             fs_writable=[str(results_dir), "/tmp"],
@@ -87,13 +88,18 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
         result = Sandbox(policy).run(supply_line_command, timeout=MSBUILD_RUNTIME_SECONDS)
 
     if not result.success:
-        raise MSBuildEvalError(f"MSBuild evaluation failed: {result.stderr.decode()}")
+        raise MSBuildEvalError(
+            f"MSBuild evaluation failed: {result.stderr.decode()}; {result.error};"
+            f"Landlock ABI Version: {landlock_abi_version()}; "
+            f"Required ABI Version: {min_landlock_abi()}; "
+        )
 
     return [Path(root) / f for root, _, files in os.walk(results_dir) for f in files]
 
 
 class Supplyline(ServiceBase):
     """An Assemblyline service implementation for extracting and identifying supply-chain embedded malicious payloads."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sandlock_available = landlock_abi_version() >= min_landlock_abi()
