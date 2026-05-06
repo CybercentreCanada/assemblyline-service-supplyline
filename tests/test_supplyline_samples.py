@@ -63,6 +63,7 @@ def test_sample(sample):
     result = Sandbox(policy).run(["/bin/true"], timeout=10)
     print(f"PYTHON ISOLATED TEST: {result}, {result.stderr.decode()}, {result.stdout.decode()}")
     assert result.success
+    assert False
 
     start_time = time.time()
     th.run_test_comparison(sample)
