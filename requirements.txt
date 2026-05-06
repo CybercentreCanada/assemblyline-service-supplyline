@@ -3,4 +3,4 @@ assemblyline-v4-service
 platformdirs>=4.9.6
 pythonnet>=3.0.5
 lxml>=6.1.0
-pip install sandlock
+sandlock==0.7.0
