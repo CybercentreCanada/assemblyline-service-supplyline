@@ -41,4 +41,4 @@ policy = Policy(
     fs_readable=readable_files
 )
 result = Sandbox(policy).run(["/bin/true"], timeout=10)
-print(f"PYTHON ISOLATED TEST: {result}, {result.stderr.decode()}, {result.stdout.decode()}")
+print(f"PYTHON ISOLATED TEST : {result}, {result.stderr.decode()}, {result.stdout.decode()}")
