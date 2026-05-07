@@ -110,10 +110,9 @@ class Supplyline(ServiceBase):
         request.result = result
 
         if not self.sandlock_available:
-            self.log.warning(
+            raise MSBuildEvalError(
                 "Landlock is either not enabled or the ABI version is too old. MSBuild script extraction will be skipped."
             )
-            return
 
         if not is_msbuild_script(request.file_path):
             self.log.info("File is not identified as a .Net MSBuild script. Skipping processing.")
@@ -121,11 +120,7 @@ class Supplyline(ServiceBase):
 
         results_dir = tempfile.mkdtemp(dir=self.working_directory)
 
-        try:
-            extracted_scripts = extract_msbuild_scripts(Path(request.file_path), results_dir)
-        except MSBuildEvalError as e:
-            self.log.error(f"Error during MSBuild evaluation: {e}")
-            return
+        extracted_scripts = extract_msbuild_scripts(Path(request.file_path), results_dir)
 
         if not extracted_scripts:
             self.log.info("No .Net MSBuild scripts were found.")
