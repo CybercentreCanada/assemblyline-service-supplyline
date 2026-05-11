@@ -8,6 +8,13 @@
 
 This Assemblyline service identifies and extracts supply-chain embedded malicious payloads.
 
+## Supplyline Environment Requirements
+Supplyline works similar to all other AssemblyLine services, so the general compatability matrix is shared. However, Supplyline has some unique requirements as well:
+  - Linux Kernel Version 6.12 or greater
+  - Landlock must be enabled
+
+If you attempt to use Supplyline where Landlock is disabled or the host kernel version is prior to 6.12, it will fail to run.
+
 ## What does Supplyline do?
 The Supplyline service aims to identify cases of supply-chain related malicious payloads and reconstruct them into artifacts which can be analyzed by existing services. Currently Supplyline only focuses on supporting MSBuild script files, with the goal to expand in the future.
 
