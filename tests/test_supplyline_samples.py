@@ -28,7 +28,6 @@ from assemblyline_v4_service.common.request import ServiceRequest
 from assemblyline_v4_service.common.result import Result, ResultSection
 from lxml import etree
 from platformdirs import PlatformDirs
-from sandlock import Policy, Sandbox, landlock_abi_version, min_landlock_abi
 import os
 import time
 

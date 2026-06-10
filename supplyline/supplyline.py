@@ -15,7 +15,7 @@ from assemblyline_v4_service.common.request import ServiceRequest
 from assemblyline_v4_service.common.result import Result, ResultSection
 from lxml import etree
 from platformdirs import PlatformDirs
-from sandlock import Policy, Sandbox, landlock_abi_version, min_landlock_abi
+from sandlock import Protection, Sandbox, landlock_abi_version, min_landlock_abi
 
 MATCH_MSBUILD_ROOT = re.compile(r"^(\{[^\}]*\})?Project")
 MSBUILD_RUNTIME_SECONDS = 10
@@ -64,7 +64,7 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
     with TemporaryDirectory() as temp_dir:
         shutil.copyfile(file, Path(temp_dir) / file.name)
 
-        policy = Policy(
+        sandbox = Sandbox(
             fs_readable=[
                 "/usr",
                 "/lib",
@@ -84,8 +84,13 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
             fs_writable=[str(results_dir), "/tmp"],
             fs_mount={"/tmp": temp_dir},
             env={"DOTNET_ROOT": "/usr/share/dotnet", "PYTHONPATH": dotnet_libs},
+            allow_degraded=[
+                Protection.NET_TCP, Protection.FS_IOCTL_DEV,
+                Protection.SIGNAL_SCOPE, Protection.ABSTRACT_UNIX_SOCKET_SCOPE
+            ]
         )
-        result = Sandbox(policy).run(supply_line_command, timeout=MSBUILD_RUNTIME_SECONDS)
+
+        result = sandbox.run(supply_line_command, timeout=MSBUILD_RUNTIME_SECONDS)
 
     if not result.success:
         raise MSBuildEvalError(
