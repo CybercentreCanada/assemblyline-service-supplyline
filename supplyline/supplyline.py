@@ -116,7 +116,6 @@ class Supplyline(ServiceBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sandlock_available = landlock_abi_version() >= min_landlock_abi()
 
     def execute(self, request: ServiceRequest):
         """Run the service.
@@ -126,12 +125,6 @@ class Supplyline(ServiceBase):
         """
         result = Result()
         request.result = result
-
-        if not self.sandlock_available:
-            raise MSBuildEvalError(
-                "Landlock is either not enabled or the ABI version is too old. "
-                "MSBuild script extraction will be skipped."
-            )
 
         if not is_msbuild_script(request.file_path):
             self.log.info("File is not identified as a .Net MSBuild script. Skipping processing.")
