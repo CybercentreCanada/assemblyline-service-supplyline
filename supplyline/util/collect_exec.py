@@ -34,7 +34,11 @@ def generate_artifact(dump_path: str, contents: str) -> None:
 
 
 def eval_exec(project: Project, task) -> str:
-    """Evaluates an MSBuild Exec task, expanding any properties and environment variables."""
+    """Evaluates an MSBuild Exec task, expanding any properties and environment variables.
+
+    Returns:
+        The expanded command string.
+    """
     raw_command = task.Parameters["Command"]
 
     expanded_command = project.ExpandString(raw_command)
@@ -47,19 +51,18 @@ def eval_exec(project: Project, task) -> str:
 
 def process_targets(project: Project, dump_path: Path) -> None:
     """Processes the targets in the MSBuild project, extracting Exec tasks and generating artifacts."""
-    exec_tasks = [
-        task
-        for target in project.Targets
-        for task in target.Tasks
-        if task.Name == "Exec"
-    ]
+    exec_tasks = [task for target in project.Targets for task in target.Tasks if task.Name == "Exec"]
 
     for idx, task in enumerate(exec_tasks):
         generate_artifact(dump_path / f"exec-{idx}.ps1", eval_exec(project, task))
 
 
 def parse_args() -> Namespace:
-    """Parses command-line arguments for the MSBuild Exec task collector."""
+    """Parses command-line arguments for the MSBuild Exec task collector.
+
+    Returns:
+        Parsed command-line arguments.
+    """
     parser = ArgumentParser(description="Collect Exec tasks from MSBuild projects")
     parser.add_argument("project_path", help="Path to the MSBuild project file (.csproj, .vbproj, etc.)")
     parser.add_argument("dump_path", help="Path to the dump file where collected Exec tasks will be stored", type=Path)

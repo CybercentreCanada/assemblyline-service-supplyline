@@ -15,7 +15,9 @@ from assemblyline_v4_service.common.request import ServiceRequest
 from assemblyline_v4_service.common.result import Result, ResultSection
 from lxml import etree
 from platformdirs import PlatformDirs
-from sandlock import Policy, Sandbox, landlock_abi_version, min_landlock_abi
+from sandlock import landlock_abi_version, min_landlock_abi
+
+from supplyline.landlock import run_confined
 
 MATCH_MSBUILD_ROOT = re.compile(r"^(\{[^\}]*\})?Project")
 MSBUILD_RUNTIME_SECONDS = 10
@@ -57,35 +59,47 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
     Raises:
         MSBuildEvalError: If the msbuild evaluation process fails.
     """
-    supply_line_command = [sys.executable, MSBUILD_EVAL_PATH, f"/tmp/{file.name}", results_dir]
+    results_dir = Path(results_dir).resolve()
+    results_dir.mkdir(parents=True, exist_ok=True)
 
     dotnet_libs = PlatformDirs("supplyshell-libs", "cccs").user_data_dir
 
     with TemporaryDirectory() as temp_dir:
-        shutil.copyfile(file, Path(temp_dir) / file.name)
+        copied_file = Path(temp_dir) / file.name
+        shutil.copyfile(file, copied_file)
 
-        policy = Policy(
-            fs_readable=[
-                "/usr",
-                "/lib",
-                "/lib64",
-                "/bin",
-                "/etc",
-                "/proc",
-                "/dev",
-                "/usr/share/dotnet",
-                "/opt/al_service",
-                dotnet_libs,
-                *site.getsitepackages(),
-                site.getusersitepackages(),
-                MSBUILD_EVAL_PATH.parent,
-                "/tmp",
-            ],
+        py_prefix = str(Path(sys.prefix).resolve())
+        fs_readable = [
+            "/usr",
+            "/lib",
+            "/lib64",
+            "/bin",
+            "/etc",
+            "/proc",
+            "/dev",
+            py_prefix,
+            "/usr/share/dotnet",
+            "/opt/al_service",
+            dotnet_libs,
+            *site.getsitepackages(),
+            site.getusersitepackages(),
+            MSBUILD_EVAL_PATH.parent,
+            copied_file.parent,
+            "/tmp",
+        ]
+
+        supply_line_command = [sys.executable, MSBUILD_EVAL_PATH, copied_file, results_dir]
+
+        # The launcher applies Landlock in the child process before executing
+        # collect_exec.py, and the path lists below define the allowed file
+        # system view for the evaluator.
+        result = run_confined(
+            supply_line_command,
+            fs_readable=fs_readable,
             fs_writable=[str(results_dir), "/tmp"],
-            fs_mount={"/tmp": temp_dir},
             env={"DOTNET_ROOT": "/usr/share/dotnet", "PYTHONPATH": dotnet_libs},
+            timeout=MSBUILD_RUNTIME_SECONDS,
         )
-        result = Sandbox(policy).run(supply_line_command, timeout=MSBUILD_RUNTIME_SECONDS)
 
     if not result.success:
         raise MSBuildEvalError(
@@ -98,20 +112,25 @@ def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
 
 
 class Supplyline(ServiceBase):
-    """An Assemblyline service implementation for extracting and identifying supply-chain embedded malicious payloads."""
+    """Extract and identify supply-chain embedded malicious payloads."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sandlock_available = landlock_abi_version() >= min_landlock_abi()
 
     def execute(self, request: ServiceRequest):
-        """Run the service. Returns the result or None if no result was produced."""
+        """Run the service.
+
+        Raises:
+            MSBuildEvalError: If Landlock is unavailable for safe MSBuild evaluation.
+        """
         result = Result()
         request.result = result
 
         if not self.sandlock_available:
             raise MSBuildEvalError(
-                "Landlock is either not enabled or the ABI version is too old. MSBuild script extraction will be skipped."
+                "Landlock is either not enabled or the ABI version is too old. "
+                "MSBuild script extraction will be skipped."
             )
 
         if not is_msbuild_script(request.file_path):
