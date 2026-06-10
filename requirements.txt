@@ -4,3 +4,4 @@ platformdirs>=4.9.6
 pythonnet>=3.0.5
 lxml>=6.1.0
 sandlock>=0.8.3
+pyseccomp>=0.1.2
