@@ -8,7 +8,6 @@ import sys
 import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from xml.etree.ElementTree import ParseError
 
 from assemblyline_v4_service.common.base import ServiceBase
 from assemblyline_v4_service.common.request import ServiceRequest
@@ -20,6 +19,8 @@ from sandlock import landlock_abi_version, min_landlock_abi
 from supplyline.landlock import run_confined
 
 MATCH_MSBUILD_ROOT = re.compile(r"^(\{[^\}]*\})?Project")
+MSBUILD_ROOT_MARKER = re.compile(rb"<\s*(?:[\w.-]+:)?Project\b")
+MSBUILD_SNIFF_BYTES = 8192
 MSBUILD_RUNTIME_SECONDS = 10
 MSBUILD_EVAL_PATH = Path(__file__).parent / "util" / "collect_exec.py"
 
@@ -37,13 +38,18 @@ def is_msbuild_script(file: Path) -> bool:
     Returns:
         bool: True if the file is identified as a .Net MSBuild script, False otherwise.
     """
-    with open(file, "r") as f:
-        try:
-            tree = etree.parse(f)
-            root = tree.getroot()
-            return MATCH_MSBUILD_ROOT.match(root.tag) is not None
-        except ParseError:
-            return False
+    try:
+        with open(file, "rb") as f:
+            if MSBUILD_ROOT_MARKER.search(f.read(MSBUILD_SNIFF_BYTES)) is None:
+                return False
+
+        with open(file, "rb") as f:
+            for _, root in etree.iterparse(f, events=("start",)):
+                return MATCH_MSBUILD_ROOT.match(root.tag) is not None
+    except:
+        return False
+
+    return False
 
 
 def extract_msbuild_scripts(file: Path, results_dir: Path) -> list[Path]:
